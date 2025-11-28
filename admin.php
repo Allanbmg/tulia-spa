@@ -36,11 +36,24 @@ if (isset($_GET['approve'])) {
 if (isset($_POST['assign_staff'])) {
     $bookingId = intval($_POST['id']);
     $staffId = intval($_POST['staff_id']);
-    $staffName = $mysqli->query("SELECT full_name FROM staff WHERE staff_id=$staffId")->fetch_assoc()['full_name'];
-    $mysqli->query("UPDATE bookings SET staff_name='$staffName' WHERE id=$bookingId");
+
+    // Check that the staff exists to avoid foreign key errors
+    $staffResult = $mysqli->query("SELECT full_name FROM staff WHERE staff_id=$staffId");
+    if ($staffResult->num_rows > 0) {
+        $staffName = $staffResult->fetch_assoc()['full_name'];
+
+        // Update both staff_id and staff_name
+        $mysqli->query("
+            UPDATE bookings 
+            SET staff_id=$staffId, staff_name='$staffName' 
+            WHERE id=$bookingId
+        ");
+    }
+
     header("Location: admin.php?tab=appointments");
     exit;
 }
+
 
 // Handle block/unblock actions using status column
 if (isset($_GET['block_staff'])) {
